@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "wordpress-website-423605",
+  "private_key_id": "94623d2359d5ddc1bce6ed569fe72ce9480b6f71",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDbezJm1SdbsK8W\nmpKxoouLHHACLnY9VXI59hyd2ZHSOax9zudzzqLhCWw2pc6GoJHfjl1mxwcxD7yp\nbGlgOH8xUOauFJw9E9MOg8op3Of0/AWwyDJTWpbl9UfX0ycbnlu0OROi/mh+Izwu\n6EduavSOvA6L2iSMFOTvTt//JgDfU+bhPQaLwdFr0mb9FA59PsuaPbh91MmKMEi2\nYJzJcHrJPhmfoTIN7at4gA0l1wYpLnlHajAoMR6/qa1gp/b5lRSWyL8sWm1zEDZA\nqRzMVicvin7rCStUUBWkYYDusxJxJHWoIUbHgAahVLntrggyNOb7ucPdR/4JcfzW\ns5QqgnglAgMBAAECggEAMsqQiCQZQtqBNkeonXOKe/Olhxe19K0mrTujdTMRkBcZ\nMBcW0GG4J0A9OutFfzm+8D97pWp3I1crN4D3ZNVGOAUrEQuDeY3yKHh+qw/sXPEK\npxW5Mblz1L0dtlguw3Ey8yLHRM+/ojsotQk7aJXXSQXDjwE5NnKqZSf5ZcwnZQbR\nnt15cIqiFncPFkW7KpatX5UIlZE75gwqBQc4FiQRnE+bA7nR1M14r869BKVuzi2q\nITaXNBU/YTEgvl4w9w1bglZhk5rjv5qJkCBaDbA56IZO5TKLK5XlKlzXJ0dSWM8h\nGB6U/ScHDgVPoa3kNivNwWyzgxJKchEFD0wTmhWn6QKBgQDvVsNY1IPsDdLLGMB/\nwKVjJzeDDcNxmq9rO03T9mJoptpB1+klb+QFJ2DMAseAw8HlMTLPxNx6rTwbxZfF\nxB3pve8lmkWuPNePfPES+VOHBmcJOq8xXccHaVkf4oCQYbeNimmmxnlstMAnSAQM\nkSL7lfxdb4q0sqTlPjxnxJHfOQKBgQDqwo1JmkrEyKDozWccADNN1ZK0AfPfUEKk\nQ5/HF6jPaDrYZ0AtjkebOxDiaSIBSlu00pSPyYQoVlN1B1WPyzC+pUjjcK1KSo+C\nzdTKKpxO8uNaN533JFdbnFbW36K3mZ+J5O5vd47kWG0hkRVK4cpQNx+V47OUlzXC\npd6tMOD0TQKBgF1czhUvyUpi1hCt1iG/p4R3PttbmhsNyVIeLyz5FshWFhvLOsKE\n1EECbGsIxoQ/WLqsJ3MPCya7vw/iU2MtLrIIimpztKzURQ5PIcdSBThN0hGyl7a9\nKy+D8+VROO+Zfr2y+aW6FJHILJDmMdYpI6lah7h3E3eLnHFkhrG/51tZAoGBAI35\n+V7BHGTkfUQuLSSnDmANQTryT14H+TXE3BWZPnOpMqV71Dl46d98mlqDgJhNMycp\nj8Vh9zY59yE4vUtIdINoDKvYkkTy0NYny4A0wvGQPWVra3JzHQ3/gBlViOAG3ZCU\nzorFQLriq6V4S+tMoIFgxQ5udkXwKQg+LmyJuhKlAoGAMC5+1RGyGuOC04lxaM+4\nCGiWE7MhJNavM0IHmiWxGhWIB8jfou85th/+fdX9pc/CoNk9sagF5FFEIbvYX2H2\n9atyN+ITmL4fsouC2JMjLGP1TgFjeElNVJeWpjYW8SFm1SpxyWxpNpIWbSeyoDQ/\niIILt1X/pWm18GvoUjV+H8c=\n-----END PRIVATE KEY-----\n",
+  "client_email": "chatbot2807@wordpress-website-423605.iam.gserviceaccount.com",
+  "client_id": "110605066034218272281",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/chatbot2807%40wordpress-website-423605.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
