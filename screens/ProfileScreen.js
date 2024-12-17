@@ -4,9 +4,9 @@ import * as ImagePicker from 'expo-image-picker';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
-import { ref, uploadBytes, getDownloadURL, update } from 'firebase/storage';
-import { database, storage, auth } from '../firebaseConfig';
-import { updateProfile } from 'firebase/auth';
+import { ref, set,update } from 'firebase/database';
+import { uploadBytes, getDownloadURL, ref as storageRef } from 'firebase/storage';
+import { auth, database, storage } from '../firebaseConfig';
 
 const ProfileScreen = ({ navigation, route }) => {
   const user = auth.currentUser;
@@ -18,37 +18,60 @@ const ProfileScreen = ({ navigation, route }) => {
   // Handle profile image change
   const handleChangeProfileImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permissionResult.granted) {
-      Alert.alert('Permission required', 'Please allow access to your photos.');
+    if (permissionResult.granted === false) {
+      Alert.alert('Permission to access camera roll is required!');
       return;
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
-      aspect: [1, 1],
+      aspect: [2, 2],
       quality: 1,
     });
 
-    if (!result.canceled) {
-      const imageUri = result.assets[0].uri;
-      const response = await fetch(imageUri);
-      const blob = await response.blob();
-      const storageRef = ref(storage, `profileImages/${user.uid}`);
-
-      uploadBytes(storageRef, blob).then(async () => {
-        const downloadURL = await getDownloadURL(storageRef);
-        setProfileImage(downloadURL);
-        updateProfile(user, { photoURL: downloadURL });
-        const userRef = ref(database, `users/${user.uid}`);
-        await update(userRef, { photoURL: downloadURL });
-        Alert.alert('Profile Photo Updated!', 'Your profile photo has been changed.');
-      }).catch((error) => {
-        Alert.alert('Error', `Failed to upload profile photo: ${error.message}`);
-      });
+    if (result.canceled) {
+      Alert.alert('No image selected', 'Please select an image to proceed.');
+    } else {
+    
+      setProfileImage(result.assets[0].uri);
+      const profileImage = result.assets[0].uri; // Correct path for the image
+      await updateProfile(profileImage, '12');
+      //console.log('Selected image URI:', result.assets[0].uri);
     }
   };
 
+  const updateProfile = async (profileImage, name) => {
+    try {
+      
+  
+      if (!user) {
+        console.error('User is not logged in.');
+        return;
+      }
+    
+        let profileImageUrl = null;
+  
+      if (profileImage) {
+        const imageRef = storageRef(storage, `profileImages/${user.uid}`);
+        const response = await fetch(profileImage);
+        const blob = await response.blob();
+
+        await uploadBytes(imageRef, blob);
+        profileImageUrl = await getDownloadURL(imageRef);
+        console.log('Profile image uploaded:', profileImageUrl);
+      }
+      await update(ref(database, 'users/' + user.uid), {
+        
+        profileImage: profileImageUrl,
+      });
+      Alert.alert('Message', 'ProfileUpdated');
+
+      console.log('Profile updated successfully.');
+    } catch (error) {
+      console.error('Error updating profile:', error.message);
+    }
+  };
   // Handle password reset
   const handlePasswordReset = () => {
     if (!currentPassword || !newPassword || !confirmPassword) {
@@ -71,7 +94,7 @@ const ProfileScreen = ({ navigation, route }) => {
           setConfirmPassword('');
         })
         .catch((error) => {
-          Alert.alert('Error', `Failed to update password: ${error.message}`);
+          Alert.alert('Error', 'Failed to update password:',error.message);
         });
     }).catch((error) => {
       Alert.alert('Error', 'Current password is incorrect.');
