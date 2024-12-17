@@ -1,116 +1,152 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, TextInput, ScrollView, Text, StyleSheet, ActivityIndicator, Dimensions, TouchableOpacity } from 'react-native';
-import * as GoogleGenerativeAI from "@google/generative-ai";
-import { Ionicons } from '@expo/vector-icons';
+import React, { useState } from 'react';
+import { View, ScrollView, TextInput, Text, StyleSheet, TouchableOpacity, Modal, FlatList } from 'react-native';
+import { ActivityIndicator } from 'react-native-paper';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import axios from 'axios';
 
-const { width, height } = Dimensions.get('window');
+const predefinedResponses = {
+  'Insect Pest Disease': 'Insect pests like aphids, whiteflies, and mites can attack eggplants. Use insecticidal soaps or neem oil for effective control.',
+  'Leaf Spot Disease': 'Leaf Spot Disease is caused by fungi or bacteria, leading to brown or black spots on leaves. Apply fungicides and maintain proper spacing between plants to prevent it.',
+  'Mosaic Virus Disease': 'Mosaic Virus Disease causes mottled patterns on leaves and stunted growth. Remove infected plants and control insect vectors like aphids.',
+  'Small Leaf Disease': 'Small Leaf Disease leads to reduced leaf size and poor growth. Ensure proper nutrient supply and monitor for pest infestations.',
+  'White Mold Disease': 'White Mold Disease causes white, cottony growth on stems and leaves. Avoid overwatering and use fungicides as needed.',
+  'Wilt Disease': 'Wilt Disease can be caused by fungi like Fusarium or bacteria. Ensure well-drained soil and rotate crops to prevent buildup of pathogens.',
+};
 
-const ChatScreen = ({ route }) => {
-  const { disease } = route.params;
-  const [messages, setMessages] = useState([{ text: `Tell me about ${disease}`, sender: 'user' }]);
+const Chatbot = () => {
+  const [messages, setMessages] = useState([
+    { role: 'system', content: 'You are an expert on eggplants and related topics like diseases, prevention, and cures. Do not answer unrelated questions.' },
+  ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [currentBotMessage, setCurrentBotMessage] = useState('');  // For word-by-word typing
+  const [previousChats, setPreviousChats] = useState([]);
+  const [modalVisible, setModalVisible] = useState(false);
+  const sendMessage = async () => {
+    if (input.trim() === '') return;
 
-  const apiKey = 'AIzaSyDwP25V6_z94Iag3bmhAmNZOmvOC6j76Bg';
+    const userMessage = { role: 'user', content: input };
+    const updatedMessages = [...messages, userMessage];
+    setMessages(updatedMessages);
+    setInput('');
+    setLoading(true);
 
-  const scrollViewRef = useRef(null); // Ref for the ScrollView
+    const matchedResponse = Object.keys(predefinedResponses).find((disease) =>
+      input.toLowerCase().includes(disease.toLowerCase())
+    );
 
-  useEffect(() => {
-   // sendMessage(`Tell me about ${disease}`, false);
-  }, []);
-
-  const cleanResponse = (response) => {
-    return response.replace(/\*/g, '').replace(/\n\n/g, '\n');
-  };
-
-  const sendMessage = async (messageText = input, isUser = true) => {
-    if (!messageText.trim()) return;
-
-    const newMessage = { text: messageText, sender: isUser ? 'user' : 'bot' };
-    setMessages(prevMessages => [...prevMessages, newMessage]);
-
-    if (isUser) {
-      setInput('');
+    if (matchedResponse) {
+      const botMessage = { role: 'assistant', content: predefinedResponses[matchedResponse] };
+      setMessages([...updatedMessages, botMessage]);
+      setLoading(false);
+      return;
     }
 
-    if (isUser) {
-      setLoading(true);
-      try {
-        const genAI = new GoogleGenerativeAI.GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    try {
+      const response = await axios.post(
+        'https://api.openai.com/v1/chat/completions',
+        {
+          model: 'ft:gpt-4o-2024-08-06:comsats-university-islamabad:eggplant:AXBw13d2',
+          messages: updatedMessages,
+          temperature: 0.2,
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer DUMMY_OPENAI_API_KEY`, 
+          },
+        }
+      );
 
-        const prompt = messages
-          .map(msg => `${msg.sender === 'user' ? 'User' : 'Bot'}: ${msg.text}`)
-          .join('\n') + `\nUser: ${messageText}`;
-        
-        const result = await model.generateContent(prompt);
-        let botResponse = result.response.text();
-        botResponse = cleanResponse(botResponse);
-
-        // Start typing the bot's response word by word
-        typeMessage(botResponse);
-
-      } catch (error) {
-        //console.error('Error fetching response from Gemini:', error);
-        setMessages(prevMessages => [
-          ...prevMessages,
-          { text: 'Sorry, something went wrong. Please try again later.', sender: 'bot' }
-        ]);
-      } finally {
-        setLoading(false);
-      }
+      const botMessage = response.data.choices[0].message;
+      setMessages([...updatedMessages, botMessage]);
+    } catch (error) {
+      console.error('Error:', error);
+      setMessages([
+        ...updatedMessages,
+        { role: 'assistant', content: 'Sorry, I encountered an error while processing your request.' },
+      ]);
     }
+    setLoading(false);
   };
-
-  const typeMessage = (fullMessage) => {
-    setCurrentBotMessage(''); // Reset the message
-    const words = fullMessage.split(' ');
-    let index = 0;
-
-    const interval = setInterval(() => {
-      if (index < words.length) {
-        setCurrentBotMessage(prev => prev + (index === 0 ? '' : ' ') + words[index]);
-        index++;
-
-        // Scroll to end on each word update
-        scrollViewRef.current?.scrollToEnd({ animated: true });
-      } else {
-        clearInterval(interval);
-        setMessages(prevMessages => [
-          ...prevMessages,
-          { text: currentBotMessage + ' ' + words.join(' '), sender: 'bot' }
-        ]);
-        setCurrentBotMessage('');
-      }
-    }, 200); // Adjust typing speed
+  const startNewChat = () => {
+    setMessages([
+      {
+        role: 'system',
+        content:
+          'You are an expert on eggplants and related topics like diseases, prevention, and cures. Do not answer unrelated questions.',
+      },
+    ]);
   };
 
   return (
     <View style={styles.container}>
-      <ScrollView style={styles.messageContainer} ref={scrollViewRef}>
+      {/* MENU button */}
+      <TouchableOpacity style={styles.menuButton} onPress={() => setModalVisible(true)}>
+        <Icon name="menu" size={24} color="white" />
+      </TouchableOpacity>
+      {/* NEW chat */}
+      <TouchableOpacity style={styles.newChatButton} onPress={startNewChat}>
+        <Icon name="add" size={24} color="white" />
+        <Text style={styles.newChatText}>New Chat</Text>
+      </TouchableOpacity>
+      {/* Modal for Drawer */}
+      <Modal visible={modalVisible} animationType="slide" transparent>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Previous Chats</Text>
+            <FlatList
+              data={previousChats}
+              keyExtractor={(item, index) => index.toString()}
+              renderItem={({ item, index }) => (
+                <TouchableOpacity
+                  onPress={() => {
+                    setMessages(item);
+                    setModalVisible(false);
+                  }}
+                  style={styles.chatListItem}
+                >
+                  <Text style={styles.chatListText}>Chat {index + 1}</Text>
+                </TouchableOpacity>
+              )}
+            />
+            <TouchableOpacity style={styles.closeModalButton} onPress={() => setModalVisible(false)}>
+              <Text style={styles.closeModalButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+      {/* Chat Messages */}
+      <ScrollView style={styles.chatContainer}>
         {messages.map((message, index) => (
-          <View key={index} style={[styles.messageBubble, message.sender === 'user' ? styles.userMessage : styles.botMessage]}>
-            <Text style={styles.messageText}>{message.text}</Text>
+          <View
+            key={index}
+            style={[
+              styles.messageBubble,
+              {
+                alignSelf: message.role === 'user' ? 'flex-end' : 'flex-start',
+                backgroundColor: message.role === 'user' ? '#D0F0C0' : '#EAEAEA',
+              },
+            ]}
+          >
+            <Text style={styles.messageText}>
+              {message.role === 'user' ? 'You: ' : 'Bot: '}
+              {message.content}
+            </Text>
           </View>
         ))}
-        {currentBotMessage ? (
-          <View style={[styles.messageBubble, styles.botMessage]}>
-            <Text style={styles.messageText}>{currentBotMessage}</Text>
-          </View>
-        ) : null}
-        {loading && <ActivityIndicator size="large" color="#406849" style={styles.loader} />}
       </ScrollView>
+
+      {loading && <ActivityIndicator size="large" color="#FF7043" />}
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
           value={input}
           onChangeText={setInput}
-          placeholder="Type your message..."
-          placeholderTextColor="#888"
+          placeholder="Ask about eggplant diseases..."
+          placeholderTextColor="black"
         />
-        <TouchableOpacity style={styles.sendButton} onPress={() => sendMessage(input)}>
-          <Ionicons name="arrow-up" size={24} color="white" />
+        <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
+          <Icon name="send" size={24} color="white" />
         </TouchableOpacity>
       </View>
     </View>
@@ -120,68 +156,107 @@ const ChatScreen = ({ route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 10,
     backgroundColor: '#BE7C4D',
-    justifyContent: 'space-between',
+    padding: 10,
   },
-  messageContainer: {
-    marginTop: 10,
+  menuButton: {
+    position: 'absolute',
+    top: 40,
+    left: 10,
+    zIndex: 1000,
+    backgroundColor: '#FF7043',
+    borderRadius: 25,
+    padding: 10,
+  },
+  newChatButton: {
+    position: 'absolute',
+    top: 40,
+    right: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FF7043',
+    borderRadius: 25,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+  },
+  newChatButtonText: {
+    marginLeft: 5,
+    color: 'white',
+    fontSize: 16,
+  },
+  modalContainer: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    width: '80%',
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 20,
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 20,
+  },
+  chatListItem: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+    width: '100%',
+  },
+  chatListText: {
+    fontSize: 16,
+  },
+  closeModalButton: {
+    marginTop: 20,
+    backgroundColor: '#FF7043',
+    padding: 10,
+    borderRadius: 5,
+  },
+  closeModalButtonText: {
+    color: 'white',
+    fontSize: 16,
+  },
+  chatContainer: {
+    flex: 1,
+    marginTop: 30,
+    marginBottom: 30,
   },
   messageBubble: {
-    padding: 15,
-    borderRadius: 20,
+    padding: 10,
+    top: 60,
+    borderRadius: 10,
     marginVertical: 5,
-    maxWidth: '75%',
-    alignSelf: 'flex-start',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  userMessage: {
-    backgroundColor: '#406849',
-    color: 'white',
-    alignSelf: 'flex-end',
-  },
-  botMessage: {
-    backgroundColor: '#e1e1e1',
+    maxWidth: '80%',
   },
   messageText: {
     fontSize: 16,
-    color: '#000',
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#D0F0C0',
+    borderRadius: 25,
     padding: 10,
-    backgroundColor: '#BE7C4D',
-    borderTopWidth: 1,
-    borderTopColor: '#BE7C4D',
-    marginBottom: 0,
-  },
-  sendButton: {
-    backgroundColor: '#406849',
-    borderRadius: 30,
-    padding: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 10,
   },
   input: {
     flex: 1,
-    borderWidth: 1,
-    borderColor: 'snow',
-    backgroundColor: 'snow',
-    padding: 10,
-    borderRadius: 20,
+    color: 'black',
+    fontSize: 16,
     marginRight: 10,
   },
-  loader: {
-    marginTop: 10,
-    color: '#8AB260',
+  sendButton: {
+    backgroundColor: '#FF7043',
+    padding: 10,
+    borderRadius: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 
-export default ChatScreen;
+export default Chatbot;
